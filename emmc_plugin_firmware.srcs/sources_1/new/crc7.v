@@ -20,9 +20,9 @@ module crc7(
         if (!nrst_i)
             crc <= init;
         else if (dat_valid_i)
-            crc <= {crc[5:0],dat_i[119]}^{5'b0,{3'b0,crc[6],2'b0,crc[6]};
+            crc <= {crc[5:0],dat_i[119]}^{3'b0,crc[6],2'b0,crc[6]};
         else
-            crc <= {crc[5:0],dat_reg[118]}^{5'b0,{3'b0,crc[6],2'b0,crc[6]};
+            crc <= {crc[5:0],dat_reg[118]}^{3'b0,crc[6],2'b0,crc[6]};
     end
 
     always @(posedge clk_100_i) begin
