@@ -1,5 +1,17 @@
+// ----------------------------------------------------------------------------
+//  cmd_ser.v
+//  Command Serializer
+//  Version 0.1
+//
+//  Copyright (C) 2020 M.Gorchichko
+//
+//  This program is free software: you can redistribute it and/or
+//  modify it under the terms of the GNU General Public License
+//  as published by the Free Software Foundation, either version
+//  3 of the License, or (at your option) any later version.
+// ----------------------------------------------------------------------------
+
 `include "timescale.v"
-`include "parameters.v"
 
 module cmd_ser(
     // common signals
@@ -15,10 +27,23 @@ module cmd_ser(
     output       emmc_cmd_o
     );
 
-    reg [7:0] cnt;
+    `include "parameters.v"
+
+    reg  [7:0] cnt;
     wire low_freq_clk;
-    reg [2:0] clk_mode_reg;
+    reg  [2:0] clk_mode_reg;
     wire [7:0] cnt_clk_re; // Counter value assosiated with the low frequency clock rising edge
+
+    reg  [5:0] cmd_index;
+    reg [31:0] cmd_arg;
+
+    // latching an input command
+    always @(posedge clk_100_i) begin
+        if (cmd_strb_i) begin
+            cmd_index <= cmd_i[37:32];
+            cmd_arg   <= cmd_i[31:0];
+        end
+    end
 
     // ----- managing e.MMC bus clocking --------------------------------------
     always @(posedge clk_100_i)
@@ -52,9 +77,8 @@ module cmd_ser(
             low_freq_clk <= 0;
         else
             begin
-                if (cnt == 0) low_freq_clk <= 0;
-                else if (cnt == cnt_clk_re)
-                    low_freq_clk <= 1;
+                if      (cnt == 0)          low_freq_clk <= 0;
+                else if (cnt == cnt_clk_re) low_freq_clk <= 1;
             end
     end
 

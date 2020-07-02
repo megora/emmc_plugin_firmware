@@ -1,5 +1,17 @@
+// ----------------------------------------------------------------------------
+//  host_core.v
+//  eMMC host core module
+//  Version 0.1
+//
+//  Copyright (C) 2020 M.Gorchichko
+//
+//  This program is free software: you can redistribute it and/or
+//  modify it under the terms of the GNU General Public License
+//  as published by the Free Software Foundation, either version
+//  3 of the License, or (at your option) any later version.
+// ----------------------------------------------------------------------------
+
 `include "timescale.v"
-`include "parameters.v"
 
 module host_core(
     input        clk_100_i,
@@ -14,10 +26,11 @@ module host_core(
 
     input [31:0] cmd_resp_i,
     input        cmd_resp_valid_i
-
     );
 
-    // ----- parameters, regs, and wires --------------------------------------
+    `include "parameters.v"
+    
+    // ----- FSM related stuff ------------------------------------------------
     localparam STATE_SIZE = 4; // state vector length
 
     // states list
@@ -29,10 +42,12 @@ module host_core(
 
     reg  [STATE_SIZE-1:0] state, next_state;
 
+
     reg  [5:0] cmd_index;
     reg [31:0] cmd_arg;
 
     localparam CNT_LEN = 9;
+    localparam pwr_up_time = (SIMULATION) ? 14 : 474; // 1 ms + 74 clock cycles required for e.MMC power-up
     reg [CNT_LEN-1:0] cnt;
     // reg cnt_ld_flag; // flag to load value to the counter
 
@@ -78,11 +93,12 @@ module host_core(
 
     // ----- counter ----------------------------------------------------------
     always @(posedge clk_100_i) begin
-        if (!nrst_i) cnt <= 474;
+        if (!nrst_i) cnt <= pwr_up_time;
         else if (cnt != 0) cnt <= cnt - 1'b1;
     end
 
     // ----- e.MMC bus clock mode handling ------------------------------------
+    // parameters below are defined in "parameters.v"
     // localparam [2:0] CLK_OFF_MODE = 3'b000; // clocking is off
     // localparam [2:0] CLK_400_MODE = 3'b001; // ~  0.4 MHz
     // localparam [2:0]  CLK_26_MODE = 3'b010; // ~ 26   MHz
